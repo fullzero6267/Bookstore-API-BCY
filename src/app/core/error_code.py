@@ -1,0 +1,42 @@
+"""
+표준 에러 코드 정의
+모든 예외는 가능한 한 아래 코드로 매핑해서 응답을 통일함
+Swagger 문서에는 ApiError.code 예시로 노툴함
+"""
+
+from __future__ import annotations
+
+from enum import Enum
+
+
+class ErrorCode(str, Enum):
+    # 400
+    BAD_REQUEST = "BAD_REQUEST"
+    VALIDATION_FAILED = "VALIDATION_FAILED"
+    INVALID_QUERY_PARAM = "INVALID_QUERY_PARAM"
+
+    # 401
+    UNAUTHORIZED = "UNAUTHORIZED"
+    TOKEN_EXPIRED = "TOKEN_EXPIRED"
+
+    # 403
+    FORBIDDEN = "FORBIDDEN"
+
+    # 404
+    RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND"
+    USER_NOT_FOUND = "USER_NOT_FOUND"
+
+    # 409
+    DUPLICATE_RESOURCE = "DUPLICATE_RESOURCE"
+    STATE_CONFLICT = "STATE_CONFLICT"
+
+    # 422
+    UNPROCESSABLE_ENTITY = "UNPROCESSABLE_ENTITY"
+
+    # 429
+    TOO_MANY_REQUESTS = "TOO_MANY_REQUESTS"
+
+    # 500
+    INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
+    DATABASE_ERROR = "DATABASE_ERROR"
+    UNKNOWN_ERROR = "UNKNOWN_ERROR"

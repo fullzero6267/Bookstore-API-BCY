@@ -15,6 +15,10 @@ class Settings(BaseSettings):  # 환경변수(.env) 설정을 한 곳에서 관�
     db_password: str
     db_name: str
 
+    redis_host: str = "localhost"
+    redis_port: int = 6379
+    redis_db: int = 0
+
     jwt_secret: str
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 60

@@ -12,6 +12,8 @@ from datetime import datetime, timedelta, timezone
 import uuid
 
 from fastapi import APIRouter, Depends, Request
+from fastapi import Response
+from app.core.redis_client import get_redis
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db                 # DB 세션
@@ -41,7 +43,7 @@ def _get_refresh_from_request(request: Request) -> str | None:
 
 
 @router.post("/login", response_model=ApiSuccess[TokenResponse], summary="로그인")
-def login(payload: LoginRequest, db: Session = Depends(get_db)):
+def login(payload: LoginRequest, response: Response, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == payload.email).first()
     if not user:
         raise_not_found("유저를 찾을 수 없습니다.", "USER_NOT_FOUND")
@@ -57,7 +59,11 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
         role=user.role
     )
 
-    refresh_token = create_refresh_token(subject=str(user.id), jti=jti)
+    jti = uuid.uuid4().hex                         # refresh token 식별자
+    refresh_token = create_refresh_token(
+        subject=str(user.id),
+        jti=jti
+    )
 
     response.set_cookie(
         key="refreshToken",
@@ -66,12 +72,6 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
         samesite="lax",
         secure=False,  # JCloud HTTPS면 True 권장
         max_age=14 * 24 * 3600,
-    )
-
-    jti = uuid.uuid4().hex                          # refresh token 식별자
-    refresh_token = create_refresh_token(
-        subject=str(user.id),
-        jti=jti
     )
 
     expires_at = datetime.now(timezone.utc) + timedelta(days=14)

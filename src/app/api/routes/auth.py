@@ -164,7 +164,7 @@ def reissue(request: Request, response: Response, db: Session = Depends(get_db))
 
 
 @router.post("/logout", response_model=ApiSuccess[dict], summary="로그아웃")
-def logout(request: Request, db: Session = Depends(get_db)):
+def logout(request: Request, response: Response, db: Session = Depends(get_db)):
     refresh = _get_refresh_from_request(request)
     if not refresh:
         raise_bad_request("refresh token 이 필요합니다.", "BAD_REQUEST")
@@ -188,4 +188,5 @@ def logout(request: Request, db: Session = Depends(get_db)):
         token_row.revoked_at = datetime.now(timezone.utc)
         db.commit()
 
+    response.delete_cookie("refreshToken")
     return ApiSuccess(message="로그아웃 성공", payload={"revoked": True})

@@ -95,7 +95,7 @@ def login(payload: LoginRequest, response: Response, db: Session = Depends(get_d
 
 
 @router.post("/reissue", response_model=ApiSuccess[TokenResponse], summary="토큰 재발급")
-def reissue(request: Request, db: Session = Depends(get_db)):
+def reissue(request: Request, response: Response, db: Session = Depends(get_db)):
     refresh = _get_refresh_from_request(request)
     if not refresh:
         raise_unauthorized("refresh token 이 필요합니다.", "UNAUTHORIZED")
@@ -103,14 +103,22 @@ def reissue(request: Request, db: Session = Depends(get_db)):
     payload = decode_token(refresh)                 # refresh token 검증
     jti = payload.get("jti")
     user_id = payload.get("sub")
-    role = payload.get("role", "ROLE_USER")
 
     if not jti or not user_id:
+        raise_unauthorized("refresh token 이 유효하지 않습니다.", "UNAUTHORIZED")
+
+    r = get_redis()
+    if r.get(f"bl:rt:{jti}") == "1":               # 로그아웃 블랙리스트 체크
         raise_unauthorized("refresh token 이 유효하지 않습니다.", "UNAUTHORIZED")
 
     token_row = db.query(RefreshToken).filter(RefreshToken.jti == jti).first()
     if not token_row or token_row.is_revoked:
         raise_unauthorized("refresh token 이 유효하지 않습니다.", "UNAUTHORIZED")
+
+    user = db.query(User).filter(User.id == int(user_id)).first()
+    if not user:
+        raise_not_found("유저를 찾을 수 없습니다.", "USER_NOT_FOUND")
+    role = user.role
 
     token_row.is_revoked = True                     # 기존 refresh 재사용 방지
     token_row.revoked_at = datetime.now(timezone.utc)
@@ -123,6 +131,15 @@ def reissue(request: Request, db: Session = Depends(get_db)):
     refresh_token = create_refresh_token(
         subject=str(user_id),
         jti=new_jti
+    )
+
+    response.set_cookie(
+        key="refreshToken",
+        value=refresh_token,
+        httponly=True,
+        samesite="lax",
+        secure=False,  # JCloud HTTPS면 True 권장
+        max_age=14 * 24 * 3600,
     )
 
     expires_at = datetime.now(timezone.utc) + timedelta(days=14)
@@ -156,6 +173,14 @@ def logout(request: Request, db: Session = Depends(get_db)):
     jti = payload.get("jti")
     if not jti:
         raise_unauthorized("refresh token 이 유효하지 않습니다.", "UNAUTHORIZED")
+
+    exp = payload.get("exp")                        # refresh 만료시간(초)
+    if exp:
+        now_ts = int(datetime.now(timezone.utc).timestamp())
+        ttl = int(exp) - now_ts
+        if ttl > 0:
+            r = get_redis()
+            r.setex(f"bl:rt:{jti}", ttl, "1")       # logout한 refresh는 재사용 차단
 
     token_row = db.query(RefreshToken).filter(RefreshToken.jti == jti).first()
     if token_row:

@@ -112,11 +112,11 @@ def health():
 
 
 # 라우터는 여기서 한 번에 등록(경로 규칙 통일 + Swagger)
-app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
-app.include_router(users.router, prefix="/api/users", tags=["Users"])
+app.include_router(auth.router, prefix="/api", tags=["Auth"])
+app.include_router(users.router, prefix="/api", tags=["Users"])
 app.include_router(books.router, prefix="/api", tags=["Books"])
-app.include_router(carts.router, prefix="/api/carts", tags=["Carts"])
-app.include_router(orders.router, prefix="/api/orders", tags=["Orders"])
-app.include_router(favorites.router, prefix="/api/favorites", tags=["Favorites"])
+app.include_router(carts.router, prefix="/api", tags=["Carts"])
+app.include_router(orders.router, prefix="/api", tags=["Orders"])
+app.include_router(favorites.router, prefix="/api", tags=["Favorites"])
 app.include_router(reviews.router, prefix="/api", tags=["Reviews"])
-app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+app.include_router(admin.router, prefix="/api", tags=["Admin"])

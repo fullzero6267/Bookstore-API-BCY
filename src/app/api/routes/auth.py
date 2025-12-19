@@ -60,7 +60,6 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     jti = uuid.uuid4().hex                          # refresh token 식별자
     refresh_token = create_refresh_token(
         subject=str(user.id),
-        role=user.role,
         jti=jti
     )
 
@@ -112,7 +111,6 @@ def reissue(request: Request, db: Session = Depends(get_db)):
     )
     refresh_token = create_refresh_token(
         subject=str(user_id),
-        role=role,
         jti=new_jti
     )
 

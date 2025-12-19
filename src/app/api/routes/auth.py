@@ -57,6 +57,17 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
         role=user.role
     )
 
+    refresh_token = create_refresh_token(subject=str(user.id), jti=jti)
+
+    response.set_cookie(
+        key="refreshToken",
+        value=refresh_token,
+        httponly=True,
+        samesite="lax",
+        secure=False,  # JCloud HTTPS면 True 권장
+        max_age=14 * 24 * 3600,
+    )
+
     jti = uuid.uuid4().hex                          # refresh token 식별자
     refresh_token = create_refresh_token(
         subject=str(user.id),

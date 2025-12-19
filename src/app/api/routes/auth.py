@@ -53,13 +53,13 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
         raise_unauthorized("비활성화된 계정입니다.", "USER_INACTIVE")
 
     access_token = create_access_token(            # access token 발급
-        sub=str(user.id),
+        subject=str(user.id),
         role=user.role
     )
 
     jti = uuid.uuid4().hex                          # refresh token 식별자
     refresh_token = create_refresh_token(
-        sub=str(user.id),
+        subject=str(user.id),
         role=user.role,
         jti=jti
     )
@@ -92,7 +92,7 @@ def reissue(request: Request, db: Session = Depends(get_db)):
 
     payload = decode_token(refresh)                 # refresh token 검증
     jti = payload.get("jti")
-    user_id = payload.get("sub")
+    user_id = payload.get("subject")
     role = payload.get("role", "ROLE_USER")
 
     if not jti or not user_id:
@@ -107,11 +107,11 @@ def reissue(request: Request, db: Session = Depends(get_db)):
 
     new_jti = uuid.uuid4().hex                      # 새 refresh 식별자
     access_token = create_access_token(
-        sub=str(user_id),
+        subject=str(user_id),
         role=role
     )
     refresh_token = create_refresh_token(
-        sub=str(user_id),
+        subject=str(user_id),
         role=role,
         jti=new_jti
     )

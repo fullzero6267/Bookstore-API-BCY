@@ -39,6 +39,10 @@ python seed.py
 
 # 서버 실행
 uvicorn app.main:app --host 0.0.0.0 --port 8080
+서버
+cd ~/Bookstore-API-BCY
+source .venv/bin/activate
+export PYTHONPATH=$(pwd)/src && uvicorn app.main:app --host 0.0.0.0 --port 8080
 ```
 
 ---
@@ -94,5 +98,15 @@ CORS_ORIGINS=
 • ADMIN: 도서 관리, 사용자 관리, 주문 상태 변경
 ```
 ```
-괄리자 계정은 따로 생성불가, 회원가입으로 일반계정만 생성가능
+{
+  "email": "user1@example.com",
+  "name": "홍길동",
+  "password": "P@ssw0rd!"
+} (Admin 과제용)
+{
+  "email": "user2@example.com",
+  "name": "일반인",
+  "password": "P@ssw0rd!"
+} (일반 사용자)
+괄리자 계정은 따로 생성불가(db에서 설정), 회원가입으로 일반계정만 생성가능
 ```

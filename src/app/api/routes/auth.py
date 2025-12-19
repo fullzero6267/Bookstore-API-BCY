@@ -53,7 +53,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
         raise_unauthorized("비활성화된 계정입니다.", "USER_INACTIVE")
 
     access_token = create_access_token(            # access token 발급
-        subject=str(user.id),
+        sub=str(user.id),
         role=user.role
     )
 

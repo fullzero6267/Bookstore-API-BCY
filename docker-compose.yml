@@ -2,25 +2,14 @@ version: "3.8"
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: bookstore-app
+    build: .
+    ports:
+      - "18080:8080"
     env_file:
       - .env
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_started
-    ports:
-      - "18080:8080"
-    command: >
-      sh -c "
-      alembic upgrade head &&
-      uvicorn app.main:app --host 0.0.0.0 --port 8080
-      "
-    restart: unless-stopped
+      - db
+      - redis
 
   db:
     image: mysql:8.0

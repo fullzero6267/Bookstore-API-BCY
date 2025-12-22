@@ -1,43 +1,27 @@
+version: "3.8"
+
 services:
+  app:
+    build: .
+    ports:
+      - "18080:8080"
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+
   db:
     image: mysql:8.0
-    container_name: bookstore-db
-    restart: always
-    environment:
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     ports:
-      - "3306:3306"
+      - "13306:3306"
+    env_file:
+      - .env
     volumes:
       - db_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
 
   redis:
     image: redis:7
-    container_name: bookstore-redis
-    restart: always
-    ports:
-      - "6379:6379"
-
-  app:
-    build: .
-    container_name: bookstore-api
-    restart: always
-    env_file:
-      - .env
-    ports:
-      - "8080:8080"
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_started
 
 volumes:
   db_data:

@@ -2,26 +2,56 @@ version: "3.8"
 
 services:
   app:
-    build: .
-    ports:
-      - "18080:8080"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bookstore-app
     env_file:
       - .env
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "18080:8080"
+    command: >
+      sh -c "
+      alembic upgrade head &&
+      uvicorn app.main:app --host 0.0.0.0 --port 8080
+      "
+    restart: unless-stopped
 
   db:
     image: mysql:8.0
+    container_name: bookstore-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
     ports:
       - "13306:3306"
-    env_file:
-      - .env
-    volumes:
-      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
 
   redis:
-    image: redis:7
+    image: redis:7-alpine
+    container_name: bookstore-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    # 외부에서 안 열어도 됨 (컨테이너끼리만)
+    # ports:
+    #   - "16379:6379"
+    restart: unless-stopped
 
 volumes:
-  db_data:
+  mysql_data:
+  redis_data:

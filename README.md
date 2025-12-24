@@ -5,6 +5,27 @@ FastAPI 기반의 온라인 서점 api
 
 ---
 
+## Docker & Container 구성 (추가)
+
+**Docker / docker-compose 기반으로 즉시 기동 가능한 구조**로 추가함  
+배포 서버 또는 다른 환경에서도 **docker-compose up -d 한 번으로 전체 서비스가 실행**됩니다.
+
+### 구성 컨테이너
+- **app** : FastAPI 서버 (Uvicorn)
+- **db** : MySQL 8.0
+- **redis** : Redis 7 (캐시 / rate-limit / 토큰 관리)
+
+# 서버 접속
+ssh -i 202246161-key.pem -p 19099 ubuntu@113.198.66.68
+
+# 프로젝트 이동
+cd Bookstore-API-BCY
+
+# 컨테이너 빌드 및 실행
+docker-compose up -d --build
+
+---
+
 ## 1. 프로젝트 개요
 
 ### 문제 정의
@@ -101,17 +122,12 @@ CORS_ORIGINS=
 ```
 {
   "email": "user1@example.com",
-  "name": "홍길동",
-  "password": "P@ssw0rd!"
-} (Admin 과제용)
-{
-  "email": "user2@example.com",
-  "name": "일반인",
-  "password": "P@ssw0rd!"
-} (일반 사용자)
-괄리자 계정은 따로 생성불가(db에서 설정), 회원가입으로 일반계정만 생성가능
+  "name": "홍길동",# Bookstore API
+
+FastAPI 기반의 온라인 서점 api  
+사용자 인증, 도서 관리, 장바구니, 주문, 리뷰, 찜 기능.
 ```
 
-너무 어렵습니다 과제 갈아업고 처음부터 다시 해도 잘 모르겠어요. 
-졸업 요건을 맞춰야해서 우선 여기까지 하고 올리고,
-틈틈히 하면서 할수 있는데 까지는 해보겠습니다. 
+---
+
+

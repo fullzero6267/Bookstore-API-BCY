@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Callable, Optional
 
 from fastapi import Depends, Request
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -17,31 +17,37 @@ from app.models.user import User
 from app.core.security import decode_token
 from app.core.errors import raise_unauthorized, raise_forbidden
 
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/api/auth/login",
-    auto_error=False,  # 토큰 없을 때 직접 처리
-)
+# Swagger 자물쇠: Bearer 토큰 입력칸 제공
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def _extract_access_token(  # 헤더/쿠키에서 access token 추출
     request: Request,
-    bearer: Optional[str],
+    creds: Optional[HTTPAuthorizationCredentials],
 ) -> Optional[str]:
-    if bearer:  # Authorization: Bearer <token>
-        return bearer
+    # Authorization: Bearer <token>
+    if creds and creds.scheme.lower() == "bearer":
+        return creds.credentials
+
+    # (옵션) 쿠키 지원 유지
     return request.cookies.get("accessToken") or request.cookies.get("access_token")
 
 
 def get_current_user(  # access token 검증 후 user 반환
     request: Request,
     db: Session = Depends(get_db),
-    bearer: Optional[str] = Depends(oauth2_scheme),
+    creds: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
 ) -> User:
-    token = _extract_access_token(request, bearer)
+    token = _extract_access_token(request, creds)
     if not token:
         raise_unauthorized("인증 토큰이 필요합니다.", "UNAUTHORIZED")
 
     payload = decode_token(token)
+
+    # access 토큰만 허용(안전)
+    if payload.get("type") != "access":
+        raise_unauthorized("유효하지 않은 토큰입니다.", "UNAUTHORIZED")
+
     user_id = payload.get("sub")
     if not user_id:
         raise_unauthorized("유효하지 않은 토큰입니다.", "UNAUTHORIZED")

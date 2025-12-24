@@ -1,0 +1,168 @@
+{
+	"info": {
+		"_postman_id": "d65d0bff-ba02-4d53-ac74-273de1276322",
+		"name": "bookstore-api",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "49718391",
+		"_collection_link": "https://fullzero6267-5742211.postman.co/workspace/Nemo's-Workspace~503c2bf9-954e-4d99-8074-d09ae30c8b47/collection/49718391-d65d0bff-ba02-4d53-ac74-273de1276322?action=share&source=collection_link&creator=49718391"
+	},
+	"item": [
+		{
+			"name": "회원가입",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"postman1@example.com\",\n  \"name\": \"포스트맨\",\n  \"password\": \"P@ssw0rd!\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://113.198.66.68:10099/api/users",
+					"protocol": "http",
+					"host": [
+						"113",
+						"198",
+						"66",
+						"68"
+					],
+					"port": "10099",
+					"path": [
+						"api",
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "로그인",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"user1@example.com\",\n  \"password\": \"P@ssw0rd!\"\n}"
+				},
+				"url": {
+					"raw": "http://113.198.66.68:10099/api/auth/login",
+					"protocol": "http",
+					"host": [
+						"113",
+						"198",
+						"66",
+						"68"
+					],
+					"port": "10099",
+					"path": [
+						"api",
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "내 정보 조회",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "토큰 재발급",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"user1@example.com\",\n  \"password\": \"P@ssw0rd!\"\n}"
+				},
+				"url": {
+					"raw": "http://113.198.66.68:10099/api/auth/reissue",
+					"protocol": "http",
+					"host": [
+						"113",
+						"198",
+						"66",
+						"68"
+					],
+					"port": "10099",
+					"path": [
+						"api",
+						"auth",
+						"reissue"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "로그아웃",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"user1@example.com\",\n  \"password\": \"P@ssw0rd!\"\n}"
+				},
+				"url": {
+					"raw": "http://113.198.66.68:10099/api/auth/logout",
+					"protocol": "http",
+					"host": [
+						"113",
+						"198",
+						"66",
+						"68"
+					],
+					"port": "10099",
+					"path": [
+						"api",
+						"auth",
+						"logout"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

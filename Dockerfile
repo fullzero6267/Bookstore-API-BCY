@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY requirements.txt /app/requirements.txt
 COPY wheels /wheels
-RUN pip install --no-cache-dir -r /app/requirements.txt
+RUN pip install --no-cache-dir --no-index --find-links=/wheels -r /app/requirements.txt
 
 # 소스 복사
 COPY src /app/src

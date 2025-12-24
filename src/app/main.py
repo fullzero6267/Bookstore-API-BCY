@@ -13,10 +13,7 @@ from datetime import datetime, timezone
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.responses import JSONResponse
-from slowapi import Limiter
-from slowapi.middleware import SlowAPIMiddleware
-from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
+
 
 from app.api.routes import auth, users, books, carts, orders, favorites, reviews, admin
 from app.core.error_code import ErrorCode

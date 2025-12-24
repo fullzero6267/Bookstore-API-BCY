@@ -120,9 +120,25 @@ CORS_ORIGINS=
 • ADMIN: 도서 관리, 사용자 관리, 주문 상태 변경
 ```
 ```
-{
-  "email": "user1@example.com",
-  "name": "홍길동",# Bookstore API
+서버 초기화 되어서 아이디 사라졌을떄
+
+1. POST /api/users 에서 회원가입
+
+2. 도커로 실행중인 Mysql 컨테이너 접속
+sudo docker exec -it bookstore-db mysql -u bookstore -p'비밀번호(텍스트파일에 .env에 있음)' bookstore
+
+3. 괄리자 권한 부여
+
+-- 사용자 목록 확인
+SELECT id, email, role FROM users;
+
+-- 특정 사용자 관리자 승격 (ex. id = 1)
+UPDATE users
+SET role = 'ROLE_ADMIN'
+WHERE id = 1;
+
+-- 변경 확인
+SELECT id, email, role FROM users WHERE id = 2;
 
 FastAPI 기반의 온라인 서점 api  
 사용자 인증, 도서 관리, 장바구니, 주문, 리뷰, 찜 기능.

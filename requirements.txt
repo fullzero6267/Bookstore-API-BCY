@@ -13,3 +13,5 @@ python-jose==3.5.0
 cryptography==46.0.3
 redis==5.0.8
 slowapi==0.1.9
+pytest>=8.0.0
+requests>=2.31.0

@@ -13,8 +13,8 @@ from datetime import datetime, timezone
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.responses import JSONResponse
-
 from slowapi import Limiter
+from slowapi.middleware import SlowAPIMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
@@ -39,6 +39,7 @@ limiter = Limiter(
 
 app = FastAPI(title="Bookstore API")
 app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
 
 
 def _error_payload(

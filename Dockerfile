@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir --no-index --find-links=/wheels -r /app/requireme
 
 # 소스 복사
 COPY src /app/src
+COPY tests /app/tests
 COPY alembic /app/alembic
 COPY alembic.ini /app/alembic.ini
 

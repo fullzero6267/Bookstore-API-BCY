@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Callable, Optional
 
 from fastapi import Depends, Request
+from fastapi.params import Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
@@ -36,7 +37,7 @@ def _extract_access_token(  # 헤더/쿠키에서 access token 추출
 def get_current_user(  # access token 검증 후 user 반환
     request: Request,
     db: Session = Depends(get_db),
-    creds: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    creds: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
 ) -> User:
     token = _extract_access_token(request, creds)
     if not token:

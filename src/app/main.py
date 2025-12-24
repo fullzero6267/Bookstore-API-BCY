@@ -5,20 +5,74 @@ app.main
 """
 
 from __future__ import annotations
+
+import os
 import time
 from datetime import datetime, timezone
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.responses import JSONResponse
+
+from slowapi import Limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+
 from app.api.routes import auth, users, books, carts, orders, favorites, reviews, admin
 from app.core.error_code import ErrorCode
 from app.core.errors import ApiException
 from app.schemas.response import now_utc_iso
 
+
+def redis_storage_uri() -> str:
+    host = os.getenv("REDIS_HOST", "redis")
+    port = os.getenv("REDIS_PORT", "6379")
+    db = os.getenv("REDIS_DB", "0")
+    return f"redis://{host}:{port}/{db}"
+
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    storage_uri=redis_storage_uri(),
+)
+
+
 app = FastAPI(title="Bookstore API")
+app.state.limiter = limiter
 
 
-@app.middleware("http")  # 요청 시간만 간단히 로깅(민감정보는 안 찍음)
+def _error_payload(
+    request: Request,
+    status_code: int,
+    code: str,
+    message: str,
+    details: dict | None = None,
+):
+    return {
+        "timestamp": now_utc_iso(),
+        "path": request.url.path,
+        "status": status_code,
+        "code": code,
+        "message": message,
+        "details": details,
+    }
+
+
+@app.exception_handler(RateLimitExceeded)
+async def ratelimit_exception_handler(request: Request, exc: RateLimitExceeded):
+    # 429도 너희 표준 포맷으로 고정
+    return JSONResponse(
+        status_code=429,
+        content=_error_payload(
+            request,
+            429,
+            ErrorCode.TOO_MANY_REQUESTS,
+            "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.",
+        ),
+    )
+
+
+@app.middleware("http")
 async def log_request(request: Request, call_next):
     start = time.perf_counter()
     try:
@@ -28,21 +82,8 @@ async def log_request(request: Request, call_next):
         print(f"[REQ] {request.method} {request.url.path} ({elapsed_ms:.1f}ms)")
 
 
-def _error_payload(request: Request, status_code: int, code: str, message: str, details: dict | None = None):
-    # 표준 에러 포맷 여기서 shape 고정
-    return {
-        "timestamp": now_utc_iso(),   # UTC ISO 통일
-        "path": request.url.path,
-        "status": status_code,
-        "code": code,                # 내부 에러코드(문서 테스트용)
-        "message": message,
-        "details": details,          # 필요할 때만 채움
-    }
-
-
 @app.exception_handler(ApiException)
 async def api_exception_handler(request: Request, exc: ApiException):
-    # 서비스 레벨에서 의도적으로 던진 예외는 그대로 표준 포맷으로
     return JSONResponse(
         status_code=exc.status,
         content=_error_payload(request, exc.status, exc.code, exc.message, exc.details),
@@ -51,7 +92,6 @@ async def api_exception_handler(request: Request, exc: ApiException):
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    # 입력 검증 실패 = 어떤 필드가 깨졌는지 errors()만 내려줌
     return JSONResponse(
         status_code=422,
         content=_error_payload(
@@ -66,7 +106,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
-    # FastAPI 기본 HTTPException 에러코드로만 매핑해서 통일
     if exc.status_code == 400:
         code = ErrorCode.BAD_REQUEST
     elif exc.status_code == 401:
@@ -82,7 +121,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     elif exc.status_code == 429:
         code = ErrorCode.TOO_MANY_REQUESTS
     else:
-        code = ErrorCode.BAD_REQUEST  # 애매한 건 일단 400 계열로 묶음
+        code = ErrorCode.BAD_REQUEST
 
     return JSONResponse(
         status_code=exc.status_code,
@@ -92,18 +131,20 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
-    # 예상 못한 예외는 500으로 통일(로그만)
     import traceback
+
     traceback.print_exc()
     return JSONResponse(
         status_code=500,
-        content=_error_payload(request, 500, ErrorCode.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
+        content=_error_payload(
+            request, 500, ErrorCode.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."
+        ),
     )
 
 
 @app.get("/health", summary="헬스체크", tags=["Health"])
-def health():
-    #  배포 체크용 인증 없이 ok만
+@limiter.limit("30/minute")  # Redis를 확실히 쓰는 지점
+def health(request: Request):
     return {
         "status": "ok",
         "version": "0.1.0",
@@ -111,7 +152,7 @@ def health():
     }
 
 
-# 라우터는 여기서 한 번에 등록(경로 규칙 통일 + Swagger)
+# 라우터 등록
 app.include_router(auth.router, prefix="/api", tags=["Auth"])
 app.include_router(users.router, prefix="/api", tags=["Users"])
 app.include_router(books.router, prefix="/api", tags=["Books"])
